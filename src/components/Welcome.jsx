@@ -79,15 +79,23 @@ const setupTextHover = (container, type) => {
         letters.forEach((letter) => {
             const { left: l, width: w } = letter.getBoundingClientRect();
             const distance = Math.abs(mouseX - (l - left + w / 2));
-            const intensity = Math.exp(-(distance ** 2) / 2000);
+            const intensity = Math.exp(-(distance ** 2) / 20000);
             animateLetter(letter, min + (max - min) * intensity);
         });
     };
+    const handleMouseLeave = () => letters.forEach((letter) => animateLetter(letter, base, 0.3));
 
     container.addEventListener("mousemove", handleMouseMove);
-    container.addEventListener("mouseleave", () => {
+    container.addEventListener("mouseleave", handleMouseLeave);
+
+    /*container.addEventListener("mouseleave", () => {
         letters.forEach((letter) => animateLetter(letter, base));
-    });
+    }); */
+
+    return () => {
+        container.removeEventListener("mousemove", handleMouseMove);
+        container.removeEventListener("mouseleave", handleMouseLeave);
+    };
 };
 
 const Welcome = () => {
@@ -95,9 +103,16 @@ const Welcome = () => {
     const subtitleRef = useRef(null);
 
     useGSAP(() => {
-        setupTextHover(titleRef.current, "title");
-        setupTextHover(subtitleRef.current, "subtitle");
+        const titleCleanup = setupTextHover(titleRef.current, "title");
+        const subtitleCleanup = setupTextHover(subtitleRef.current, "subtitle");
+
+        return () => {
+            subtitleCleanup();
+            titleCleanup();
+        };
     }, []);
+
+
 
     return (
         <section id="welcome">
